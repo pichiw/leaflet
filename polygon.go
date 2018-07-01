@@ -2,6 +2,8 @@ package leaflet
 
 import (
 	"syscall/js"
+
+	"github.com/gowasm/vecty"
 )
 
 func NewPolyline(opts PolylineOptions, coords ...*Coordinate) *Polyline {
@@ -12,7 +14,7 @@ func NewPolyline(opts PolylineOptions, coords ...*Coordinate) *Polyline {
 
 	return &Polyline{
 		Layer: Layer{
-			Value: gL.Call("polyline", o, Value(opts)),
+			Value: gL.Call("polyline", o, vecty.Value(opts)),
 		},
 		coordinates: coords,
 	}
@@ -27,7 +29,7 @@ func (p *Polyline) Coordinates() []*Coordinate {
 	return p.coordinates
 }
 
-// PolylineOptions are options that can be applied to a polyline
+// PolylineOptions are options that can be applied to a Polyline
 type PolylineOptions struct {
 	PathOptions
 

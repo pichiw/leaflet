@@ -11,10 +11,12 @@ import (
 var gL = js.Global().Get("L")
 
 // NewMap creates a new leaflet map
-func NewMap(divid string, adders ...MapAdderTo) *Map {
+func NewMap(divid string, startingView *Coordinate, startZoom int, adders ...MapAdderTo) *Map {
 	return &Map{
 		divid:  divid,
 		adders: adders,
+		view:   startingView,
+		zoom:   startZoom,
 	}
 }
 
@@ -33,6 +35,10 @@ type Map struct {
 
 	adders      []MapAdderTo
 	addersMutex sync.Mutex
+
+	view      *Coordinate
+	zoom      int
+	viewMutex sync.Mutex
 }
 
 // Add adders to map
@@ -47,6 +53,23 @@ func (m *Map) Add(as ...MapAdderTo) {
 	m.adders = append(m.adders, as...)
 }
 
+func (m *Map) Zoom() int {
+	return m.zoom
+}
+
+func (m *Map) Coordinate() *Coordinate {
+	return m.view
+}
+
+func (m *Map) View(v *Coordinate, zoom int) {
+	m.viewMutex.Lock()
+	defer m.viewMutex.Unlock()
+
+	m.view = v
+	m.zoom = zoom
+	m.Call("setView", m.view.Value, m.zoom)
+}
+
 // Mount is called after everything renders and the dom is fully mounted
 func (m *Map) Mount() {
 	m.Value = gL.Call("map", m.divid)
@@ -57,8 +80,7 @@ func (m *Map) Mount() {
 		a.AddTo(m)
 	}
 
-	m.Call("setView", NewCoordinate(49.8951, -97.1384).Value, 5)
-
+	m.View(m.view, m.zoom)
 }
 
 // Render renders the map

@@ -1,12 +1,14 @@
 package leaflet
 
+import "github.com/gowasm/vecty"
+
 func NewTileLayer(o TileLayerOptions) *TileLayer {
 	return &TileLayer{
 		Layer: Layer{
 			Value: gL.Call(
 				"tileLayer",
 				"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-				Value(o),
+				vecty.Value(o),
 			),
 		},
 	}
