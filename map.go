@@ -96,6 +96,12 @@ func (m *Map) View(v *Coordinate, zoom int) {
 	m.Call("setView", vecty.Value(v), zoom)
 }
 
+func (m *Map) coreEvents() Events {
+	return Events{
+		"zoom": m.onZoom,
+	}
+}
+
 // Mount is called after everything renders and the dom is fully mounted
 func (m *Map) Mount() {
 	m.Value = gL.Call("map", m.divid, vecty.Value(m.opts))
@@ -106,11 +112,10 @@ func (m *Map) Mount() {
 		a.AddTo(m)
 	}
 
-	coreEvents := Events{
-		"zoom": m.onZoom,
-	}
-	coreEvents.Bind(m.Value)
+	m.coreEvents().Bind(m.Value)
 	m.events.Bind(m.Value)
+
+	m.Value.Call("invalidateSize")
 }
 
 // Render renders the map

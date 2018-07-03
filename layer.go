@@ -1,6 +1,10 @@
 package leaflet
 
-import "syscall/js"
+import (
+	"syscall/js"
+
+	"github.com/gowasm/vecty"
+)
 
 type Layer struct {
 	js.Value
@@ -8,5 +12,5 @@ type Layer struct {
 
 // AddTo add the receiver to the specified Map.
 func (l *Layer) AddTo(m *Map) {
-	l.Value.Call("addTo", m.Value)
+	l.Value.Call("addTo", vecty.Value(m))
 }
