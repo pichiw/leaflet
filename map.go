@@ -16,11 +16,9 @@ func NewMap(
 	divid string,
 	opts MapOptions,
 	events Events,
-	adders ...MapAdderTo,
 ) *Map {
 	return &Map{
 		divid:  divid,
-		adders: adders,
 		opts:   opts,
 		events: events,
 	}
@@ -39,9 +37,6 @@ type Map struct {
 
 	divid string
 
-	adders      []MapAdderTo
-	addersMutex sync.Mutex
-
 	opts      MapOptions
 	optsMutex sync.RWMutex
 
@@ -50,14 +45,15 @@ type Map struct {
 
 // Add adders to map
 func (m *Map) Add(as ...MapAdderTo) {
-	if len(as) == 0 {
-		return
+	for _, a := range as {
+		a.AddTo(m)
 	}
+}
 
-	m.addersMutex.Lock()
-	defer m.addersMutex.Unlock()
-
-	m.adders = append(m.adders, as...)
+func (m *Map) Remove(rs ...interface{}) {
+	for _, r := range rs {
+		m.Call("remove", vecty.Value(r))
+	}
 }
 
 func (m *Map) onZoom(vs []js.Value) {
@@ -106,16 +102,8 @@ func (m *Map) coreEvents() Events {
 func (m *Map) Mount() {
 	m.Value = gL.Call("map", m.divid, vecty.Value(m.opts))
 
-	m.addersMutex.Lock()
-	defer m.addersMutex.Unlock()
-	for _, a := range m.adders {
-		a.AddTo(m)
-	}
-
 	m.coreEvents().Bind(m.Value)
 	m.events.Bind(m.Value)
-
-	m.Value.Call("invalidateSize")
 }
 
 // Render renders the map

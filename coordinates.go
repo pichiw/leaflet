@@ -5,10 +5,13 @@ import "syscall/js"
 // NewCoordinate creates a new coordinate
 func NewCoordinate(lat, lng float64) *Coordinate {
 	return &Coordinate{
-		lat:   lat,
-		lng:   lng,
-		Value: gL.Call("latLng", lat, lng),
+		lat: lat,
+		lng: lng,
 	}
+}
+
+func (c *Coordinate) JSValue() js.Value {
+	return gL.Call("latLng", c.lat, c.lng)
 }
 
 // NewCoordinates creates a set of coordinates with alternating lats and longs
@@ -31,8 +34,6 @@ func NewCoordinates(latLngs ...float64) []*Coordinate {
 }
 
 type Coordinate struct {
-	js.Value
-
 	lat float64
 	lng float64
 }

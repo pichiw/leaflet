@@ -7,21 +7,39 @@ import (
 )
 
 func NewPolyline(opts PolylineOptions, coords ...*Coordinate) *Polyline {
-	o := js.Global().Get("Array").New()
-	for _, c := range coords {
-		o.Call("push", c.Value)
-	}
-
 	return &Polyline{
-		Layer: Layer{
-			Value: gL.Call("polyline", o, vecty.Value(opts)),
-		},
+		opts:        opts,
 		coordinates: coords,
 	}
 }
 
+func (l *Polyline) JSValue() js.Value {
+	if l.v != nil {
+		return *l.v
+	}
+
+	o := js.Global().Get("Array").New()
+	for _, c := range l.coordinates {
+		o.Call("push", vecty.Value(c))
+	}
+
+	v := gL.Call("polyline", o, vecty.Value(l.opts))
+	l.v = &v
+	return v
+}
+
+// AddTo add the receiver to the specified Map.
+func (l *Polyline) AddTo(m *Map) {
+	l.JSValue().Call("addTo", vecty.Value(m))
+}
+
+func (l *Polyline) Remove() {
+	l.JSValue().Call("remove")
+}
+
 type Polyline struct {
-	Layer
+	v           *js.Value
+	opts        PolylineOptions
 	coordinates []*Coordinate
 }
 

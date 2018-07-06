@@ -1,20 +1,34 @@
 package leaflet
 
-import "github.com/gowasm/vecty"
+import (
+	"syscall/js"
+
+	"github.com/gowasm/vecty"
+)
 
 func NewTileLayer(o TileLayerOptions) *TileLayer {
 	return &TileLayer{
-		Layer: Layer{
-			Value: gL.Call(
-				"tileLayer",
-				"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-				vecty.Value(o),
-			),
-		},
+		opts: o,
 	}
 }
 
-type TileLayer struct{ Layer }
+func (l *TileLayer) JSValue() js.Value {
+	return gL.Call(
+		"tileLayer",
+		"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+		vecty.Value(l.opts),
+	)
+}
+
+// AddTo add the receiver to the specified Map.
+func (l *TileLayer) AddTo(m *Map) {
+	l.JSValue().Call("addTo", vecty.Value(m))
+}
+
+type TileLayer struct {
+	// Layer
+	opts TileLayerOptions
+}
 
 // TileLayerOptions are tile layer options
 type TileLayerOptions struct {
