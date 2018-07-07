@@ -6,7 +6,6 @@ import (
 	"github.com/gowasm/gopherwasm/js"
 
 	"github.com/gowasm/vecty"
-	"github.com/gowasm/vecty/elem"
 )
 
 var gL = js.Global().Get("L")
@@ -17,11 +16,18 @@ func NewMap(
 	opts MapOptions,
 	events Events,
 ) *Map {
-	return &Map{
+
+	m := &Map{
+		Value:  gL.Call("map", divid, vecty.Value(opts)),
 		divid:  divid,
 		opts:   opts,
 		events: events,
 	}
+
+	m.coreEvents().Bind(m.Value)
+	m.events.Bind(m.Value)
+
+	return m
 }
 
 // MapAdderTo defines things that can be added to a map
@@ -43,16 +49,14 @@ type Map struct {
 	events Events
 }
 
+func (m *Map) Remove() {
+
+}
+
 // Add adders to map
 func (m *Map) Add(as ...MapAdderTo) {
 	for _, a := range as {
 		a.AddTo(m)
-	}
-}
-
-func (m *Map) Remove(rs ...interface{}) {
-	for _, r := range rs {
-		m.Call("remove", vecty.Value(r))
 	}
 }
 
@@ -96,19 +100,6 @@ func (m *Map) coreEvents() Events {
 	return Events{
 		"zoom": m.onZoom,
 	}
-}
-
-// Mount is called after everything renders and the dom is fully mounted
-func (m *Map) Mount() {
-	m.Value = gL.Call("map", m.divid, vecty.Value(m.opts))
-
-	m.coreEvents().Bind(m.Value)
-	m.events.Bind(m.Value)
-}
-
-// Render renders the map
-func (m *Map) Render() vecty.ComponentOrHTML {
-	return elem.Div(vecty.Markup(vecty.Attribute("id", m.divid)))
 }
 
 type MapOptions struct {
