@@ -1,8 +1,6 @@
 package leaflet
 
 import (
-	"sync"
-
 	"github.com/gowasm/gopherwasm/js"
 
 	"github.com/gowasm/vecty"
@@ -18,9 +16,8 @@ func NewMap(
 ) *Map {
 
 	m := &Map{
-		Value:  gL.Call("map", divid, vecty.Value(opts)),
+		Value:  gL.Call("map", divid, vecty.Value(opts)).Call("setView", vecty.Value(opts.Center), opts.Zoom),
 		divid:  divid,
-		opts:   opts,
 		events: events,
 	}
 
@@ -30,66 +27,25 @@ func NewMap(
 	return m
 }
 
-// MapAdderTo defines things that can be added to a map
-type MapAdderTo interface {
-	AddTo(m *Map)
-}
-
 // Map represents a leaflet map
 type Map struct {
 	js.Value
-
 	vecty.Core
 
-	divid string
-
-	opts      MapOptions
-	optsMutex sync.RWMutex
-
+	divid  string
 	events Events
 }
 
-func (m *Map) Remove() {
-
-}
-
-// Add adders to map
-func (m *Map) Add(as ...MapAdderTo) {
-	for _, a := range as {
-		a.AddTo(m)
-	}
-}
-
 func (m *Map) onZoom(vs []js.Value) {
-	if len(vs) == 0 {
-		return
-	}
-
-	event := vs[0]
-	target := event.Get("target")
-	if target == js.Undefined() {
-		return
-	}
-	zoom := target.Get("_zoom")
-	if zoom == js.Undefined() {
-		return
-	}
-
-	m.optsMutex.Lock()
-	defer m.optsMutex.Unlock()
-	m.opts.Zoom = zoom.Int()
 }
 
 func (m *Map) Zoom() int {
-	m.optsMutex.RLock()
-	defer m.optsMutex.RUnlock()
-	return m.opts.Zoom
-}
+	zoom := m.Get("zoom")
+	if zoom == js.Undefined() {
+		return 0
+	}
 
-func (m *Map) Center() *Coordinate {
-	m.optsMutex.RLock()
-	defer m.optsMutex.RUnlock()
-	return m.opts.Center
+	return zoom.Int()
 }
 
 func (m *Map) View(v *Coordinate, zoom int) {
