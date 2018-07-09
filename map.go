@@ -36,6 +36,10 @@ type Map struct {
 	events Events
 }
 
+func (m *Map) Bounds(b js.Value) {
+	m.Value.Call("fitBounds", b)
+}
+
 func (m *Map) onZoom(vs []js.Value) {
 }
 

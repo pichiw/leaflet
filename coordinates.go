@@ -1,6 +1,10 @@
 package leaflet
 
-import "syscall/js"
+import (
+	"sync"
+
+	"github.com/gowasm/gopherwasm/js"
+)
 
 // NewCoordinate creates a new coordinate
 func NewCoordinate(lat, lng float64) *Coordinate {
@@ -11,7 +15,11 @@ func NewCoordinate(lat, lng float64) *Coordinate {
 }
 
 func (c *Coordinate) JSValue() js.Value {
-	return gL.Call("latLng", c.lat, c.lng)
+	c.valueOnce.Do(func() {
+		v := gL.Call("latLng", c.lat, c.lng)
+		c.v = &v
+	})
+	return *c.v
 }
 
 // NewCoordinates creates a set of coordinates with alternating lats and longs
@@ -34,8 +42,10 @@ func NewCoordinates(latLngs ...float64) []*Coordinate {
 }
 
 type Coordinate struct {
-	lat float64
-	lng float64
+	v         *js.Value
+	valueOnce sync.Once
+	lat       float64
+	lng       float64
 }
 
 func (c *Coordinate) Lat() float64 {

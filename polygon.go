@@ -1,7 +1,9 @@
 package leaflet
 
 import (
-	"syscall/js"
+	"sync"
+
+	"github.com/gowasm/gopherwasm/js"
 
 	"github.com/gowasm/vecty"
 )
@@ -14,18 +16,16 @@ func NewPolyline(opts PolylineOptions, coords ...*Coordinate) *Polyline {
 }
 
 func (l *Polyline) JSValue() js.Value {
-	if l.v != nil {
-		return *l.v
-	}
+	l.valueOnce.Do(func() {
+		o := js.Global().Get("Array").New()
+		for _, c := range l.coordinates {
+			o.Call("push", vecty.Value(c))
+		}
 
-	o := js.Global().Get("Array").New()
-	for _, c := range l.coordinates {
-		o.Call("push", vecty.Value(c))
-	}
-
-	v := gL.Call("polyline", o, vecty.Value(l.opts))
-	l.v = &v
-	return v
+		v := gL.Call("polyline", o, vecty.Value(l.opts))
+		l.v = &v
+	})
+	return *l.v
 }
 
 // AddTo add the receiver to the specified Map.
@@ -39,6 +39,7 @@ func (l *Polyline) Remove() {
 
 type Polyline struct {
 	v           *js.Value
+	valueOnce   sync.Once
 	opts        PolylineOptions
 	coordinates []*Coordinate
 }

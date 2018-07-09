@@ -1,7 +1,7 @@
 package leaflet
 
 import (
-	"syscall/js"
+	"github.com/gowasm/gopherwasm/js"
 
 	"github.com/gowasm/vecty"
 )

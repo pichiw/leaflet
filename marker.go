@@ -1,7 +1,9 @@
 package leaflet
 
 import (
-	"syscall/js"
+	"sync"
+
+	"github.com/gowasm/gopherwasm/js"
 
 	"github.com/gowasm/vecty"
 )
@@ -14,13 +16,12 @@ func NewMarker(c *Coordinate, events Events) *Marker {
 }
 
 func (m *Marker) JSValue() js.Value {
-	if m.v != nil {
-		return *m.v
-	}
-	marker := gL.Call("marker", vecty.Value(m.coord))
-	m.events.Bind(marker)
-	m.v = &marker
-	return marker
+	m.valueOnce.Do(func() {
+		marker := gL.Call("marker", vecty.Value(m.coord))
+		m.events.Bind(marker)
+		m.v = &marker
+	})
+	return *m.v
 }
 
 // AddTo add the receiver to the specified Map.
@@ -33,8 +34,8 @@ func (l *Marker) Remove() {
 }
 
 type Marker struct {
-	// Layer
-	v      *js.Value
-	coord  *Coordinate
-	events Events
+	v         *js.Value
+	valueOnce sync.Once
+	coord     *Coordinate
+	events    Events
 }
